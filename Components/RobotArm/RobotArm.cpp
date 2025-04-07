@@ -60,8 +60,8 @@ namespace Components {
         U16 position
     )
   {
-	  // TODO: Add evr here
     static constexpr U16 durationMs = 300;
+    this->log_ACTIVITY_HI_SetPosition(servo, position);
     Drv::SendStatus status = this->pwmServoSetPosition(durationMs, servo, position);
     Fw::CmdResponse response = (status == Drv::SendStatus::SEND_OK) ? Fw::CmdResponse::OK : Fw::CmdResponse::EXECUTION_ERROR;
 

@@ -24,6 +24,14 @@ module Components {
         @ Servos position
         telemetry serverPosition: ServoStats
 
+        @ Event indicating commanded servor and position
+        event SetPosition(
+          servo: Servo
+          position: U16
+        ) \
+        severity activity high \
+        format "Setting servo {} to position {}"
+
         @ Periodically request servo telemetry
         async input port run: Svc.Sched
 
