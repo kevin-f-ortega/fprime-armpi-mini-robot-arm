@@ -111,6 +111,7 @@ module ArmPiMiniRobotArm {
       rateGroup3.RateGroupMemberOut[0] -> $health.Run
       rateGroup3.RateGroupMemberOut[1] -> blockDrv.Sched
       rateGroup3.RateGroupMemberOut[2] -> bufferManager.schedIn
+      rateGroup3.RateGroupMemberOut[3] -> robotArm.run
     }
 
     connections Sequencer {
@@ -136,7 +137,8 @@ module ArmPiMiniRobotArm {
     }
 
     connections ArmPiMiniRobotArm {
-      # Add here connections to user-defined components
+      uartArm.$recv -> robotArm.$recv
+      robotArm.$send -> uartArm.$send
     }
 
   }
