@@ -39,8 +39,10 @@ module ArmPiMiniRobotArm {
     instance rateGroup2
     instance rateGroup3
     instance rateGroupDriver
+    instance robotArm
     instance textLogger
     instance systemResources
+    instance uartArm
 
     # ----------------------------------------------------------------------
     # Pattern graph specifiers

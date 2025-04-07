@@ -87,6 +87,11 @@ module ArmPiMiniRobotArm {
     stack size Default.STACK_SIZE \
     priority 96
 
+  instance robotArm: Components.RobotArm base id 0x0E00 \
+    queue size Default.QUEUE_SIZE \
+    stack size Default.STACK_SIZE \
+    priority 95
+
   # ----------------------------------------------------------------------
   # Queued component instances
   # ----------------------------------------------------------------------
@@ -120,5 +125,7 @@ module ArmPiMiniRobotArm {
   instance systemResources: Svc.SystemResources base id 0x4A00
 
   instance comStub: Svc.ComStub base id 0x4B00
+
+  instance uartArm: Drv.LinuxUartDriver base id 0x4C00
 
 }
