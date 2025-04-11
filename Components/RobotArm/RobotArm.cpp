@@ -66,21 +66,26 @@ namespace Components {
     )
   {
     // TODO
-  }
+}
 
-  // ----------------------------------------------------------------------
-  // Handler implementations for commands
-  // ----------------------------------------------------------------------
+// ----------------------------------------------------------------------
+// Handler implementations for commands
+// ----------------------------------------------------------------------
 
-  void RobotArm ::
-    SetPosition_cmdHandler(
-        FwOpcodeType opCode,
-        U32 cmdSeq,
-        Components::RobotArm_Servo servo,
-        U16 position
-    )
-  {
+void RobotArm ::SetPosition_cmdHandler(FwOpcodeType opCode,
+                                       U32 cmdSeq,
+                                       Components::RobotArm_Servo servo,
+                                       U16 position) {
     static constexpr U16 durationMs = 300;
+    static constexpr U16 lowerBound = 500;
+    static constexpr U16 upperBound = 2500;
+
+    if (position < lowerBound) {
+        position = lowerBound;
+    } else if (position > upperBound) {
+        position = upperBound;
+    }
+
     this->log_ACTIVITY_HI_SetPosition(servo, position);
     Drv::SendStatus status = this->pwmServoSetPosition(durationMs, servo, position);
     Fw::CmdResponse response = (status == Drv::SendStatus::SEND_OK) ? Fw::CmdResponse::OK : Fw::CmdResponse::EXECUTION_ERROR;
