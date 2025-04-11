@@ -5,6 +5,7 @@
 // ======================================================================
 
 #include "Components/RobotArm/RobotArm.hpp"
+#include "Os/Console.hpp"
 
 namespace Components {
 
@@ -35,12 +36,32 @@ RobotArm ::~RobotArm() {}
 // ----------------------------------------------------------------------
 
 void RobotArm ::recv_handler(FwIndexType portNum, Fw::Buffer& recvBuffer, const Drv::RecvStatus& recvStatus) {
-    // TODO
+    U8* data = recvBuffer.getData();
+    FW_ASSERT(data != nullptr);
+
+    // start byte1 = 0
+    // start byte2 = 1
+    // command byte = 2
+    // length byte = 3
+    // data start byte = 4
+    // check sum byte = data-start-byte + length-byte
+
+    if (data[2] == 0x04) {
+        Fw::Logger::log("0x%2x 0x%2x 0x%2x 0x%2x 0x%2x 0x%2x 0x%2x 0x%2x\n", data[0], data[1], data[2], data[3],
+                        data[4], data[5], data[6], data[7]);
+        RobotArm_ServoStats stat;
+        stat.setservo(static_cast<RobotArm_Servo::T>(data[4]));
+        U16 pwm = (static_cast<U16>(data[7]) << 8 | data[6]);
+        stat.setposition(pwm);
+
+        this->tlmWrite_serverPosition(stat);
+    }
+
     this->deallocate_out(0, recvBuffer);
 }
 
 void RobotArm ::run_handler(FwIndexType portNum, U32 context) {
-    // TODO
+    this->readServoPosition(RobotArm_Servo::CLAW);
 }
 
 // ----------------------------------------------------------------------
@@ -85,13 +106,14 @@ U8 RobotArm::checksumCrc8(const U8* const data, const U32 dataSize) {
 Drv::SendStatus RobotArm::pwmServoSetPosition(const U16 durationMs, const RobotArm_Servo servo, const U16 pwm) {
     static constexpr U16 MAX_DATA_SIZE_BYTES = 12;
     static constexpr U8 PWM_SERVO_CMD = 4;
+    static constexpr U8 CMD = 0x01;
     U8 dataLength = 7;
     U8 buf[MAX_DATA_SIZE_BYTES];
     buf[0] = 0xAA;           // Header
     buf[1] = 0x55;           // Header
     buf[2] = PWM_SERVO_CMD;  // Function
     buf[3] = dataLength;     // Data packet length
-    buf[4] = 0x01;           // First byte of data
+    buf[4] = CMD;            // command
     buf[5] = durationMs & 0xFF;
     buf[6] = (durationMs >> 8) & 0xFF;
     buf[7] = 1;                         // number of positions
@@ -101,6 +123,26 @@ Drv::SendStatus RobotArm::pwmServoSetPosition(const U16 durationMs, const RobotA
     // When calculating the checksum, omit the 2 header bytes
     U8 crc = this->checksumCrc8(buf + 2, (dataLength + 2));
     buf[11] = crc;
+    Fw::Buffer buffer(buf, MAX_DATA_SIZE_BYTES);
+    Drv::SendStatus status = this->send_out(0, buffer);
+    return status;
+}
+
+Drv::SendStatus RobotArm::readServoPosition(const RobotArm_Servo servo) {
+    static constexpr U16 MAX_DATA_SIZE_BYTES = 7;
+    static constexpr U8 PWM_SERVO_CMD = 4;
+    static constexpr U8 CMD = 0x05;
+    U8 dataLength = 2;
+    U8 buf[MAX_DATA_SIZE_BYTES];
+    buf[0] = 0xAA;                      // Header
+    buf[1] = 0x55;                      // Header
+    buf[2] = PWM_SERVO_CMD;             // Function
+    buf[3] = dataLength;                // Data packet length
+    buf[4] = CMD;                       // command
+    buf[5] = static_cast<U8>(servo.e);  // servo ID
+    // When calculating the checksum, omit the 2 header bytes
+    U8 crc = this->checksumCrc8(buf + 2, (dataLength + 2));
+    buf[6] = crc;
     Fw::Buffer buffer(buf, MAX_DATA_SIZE_BYTES);
     Drv::SendStatus status = this->send_out(0, buffer);
     return status;

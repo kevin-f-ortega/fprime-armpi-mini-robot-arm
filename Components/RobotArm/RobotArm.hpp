@@ -67,7 +67,10 @@ class RobotArm : public RobotArmComponentBase {
         // ----------------------------------------------------------------------
         U8
         checksumCrc8(const U8* const data, const U32 dataSize);
+
     Drv::SendStatus pwmServoSetPosition(const U16 durationMs, const RobotArm_Servo servo, const U16 pwm);
+
+    Drv::SendStatus readServoPosition(const RobotArm_Servo servo);
 };
 
 }  // namespace Components
