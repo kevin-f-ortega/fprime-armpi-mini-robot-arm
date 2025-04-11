@@ -137,7 +137,13 @@ module ArmPiMiniRobotArm {
     }
 
     connections ArmPiMiniRobotArm {
+      # uartArm allocates buffer to store incoming data from UART device
+      uartArm.allocate -> bufferManager.bufferGetCallee
+      # uartArm sends received data to robotArm
       uartArm.$recv -> robotArm.$recv
+      # robotArm deallocates received buffer from uartArm
+      robotArm.deallocate -> bufferManager.bufferSendIn
+      # robotArm sends local buffer to uartArm. No deallocation needed
       robotArm.$send -> uartArm.$send
     }
 

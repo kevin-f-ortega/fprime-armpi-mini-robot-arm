@@ -90,7 +90,7 @@ module ArmPiMiniRobotArm {
   instance robotArm: Components.RobotArm base id 0x0E00 \
     queue size Default.QUEUE_SIZE \
     stack size Default.STACK_SIZE \
-    priority 95
+    priority 94
 
   # ----------------------------------------------------------------------
   # Queued component instances

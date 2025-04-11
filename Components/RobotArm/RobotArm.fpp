@@ -38,6 +38,9 @@ module Components {
         @ Receive telemetry
         async input port $recv: Drv.ByteStreamRecv
 
+        @ Deallocate received buffer
+        output port deallocate: Fw.BufferSend
+
         @ Send out arm data
         output port $send: Drv.ByteStreamSend
 

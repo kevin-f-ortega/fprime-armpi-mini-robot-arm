@@ -54,7 +54,11 @@ enum TopologyConstants {
     DEFRAMER_BUFFER_COUNT = 30,
     COM_DRIVER_BUFFER_SIZE = 3000,
     COM_DRIVER_BUFFER_COUNT = 30,
-    BUFFER_MANAGER_ID = 200
+    BUFFER_MANAGER_ID = 200,
+    // Robot Arm constants
+    UART_ARM_PRIORITY = 95,
+    ARM_DRIVER_BUFFER_SIZE = 3000,
+    ARM_DRIVER_BUFFER_COUNT = 30,
 };
 
 // Ping entries are autocoded, however; this code is not properly exported. Thus, it is copied here.
@@ -90,6 +94,8 @@ void configureTopology(const TopologyState& state) {
     upBuffMgrBins.bins[1].numBuffers = DEFRAMER_BUFFER_COUNT;
     upBuffMgrBins.bins[2].bufferSize = COM_DRIVER_BUFFER_SIZE;
     upBuffMgrBins.bins[2].numBuffers = COM_DRIVER_BUFFER_COUNT;
+    upBuffMgrBins.bins[3].bufferSize = ARM_DRIVER_BUFFER_SIZE;
+    upBuffMgrBins.bins[3].numBuffers = ARM_DRIVER_BUFFER_COUNT;
     bufferManager.setup(BUFFER_MANAGER_ID, 0, mallocator, upBuffMgrBins);
 
     // Framer and Deframer components need to be passed a protocol handler
@@ -131,6 +137,15 @@ void configureTopology(const TopologyState& state) {
     comQueue.configure(configurationTable, 0, mallocator);
     if (state.hostname != nullptr && state.port != 0) {
         comDriver.configure(state.hostname, state.port);
+    }
+
+    // uart arm driver
+    if (uartArm.open("/dev/ttyAMA0", Drv::LinuxUartDriver::UartBaudRate::BAUD_1000K,
+                     Drv::LinuxUartDriver::UartFlowControl::NO_FLOW, Drv::LinuxUartDriver::UartParity::PARITY_NONE,
+                     ARM_DRIVER_BUFFER_SIZE)) {
+        uartArm.start(UART_ARM_PRIORITY, Default::STACK_SIZE);
+    } else {
+        printf("Failed to open UART /dev/ttyAMA0\n");
     }
 }
 

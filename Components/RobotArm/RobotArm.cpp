@@ -55,7 +55,8 @@ namespace Components {
         const Drv::RecvStatus& recvStatus
     )
   {
-    // TODO
+    //TODO
+    this->deallocate_out(0, recvBuffer);
   }
 
   void RobotArm ::
