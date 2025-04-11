@@ -11,73 +11,65 @@
 
 namespace Components {
 
-  class RobotArm :
-    public RobotArmComponentBase
-  {
+class RobotArm : public RobotArmComponentBase {
+  public:
+    // ----------------------------------------------------------------------
+    // Component construction and destruction
+    // ----------------------------------------------------------------------
 
-    public:
+    //! Construct RobotArm object
+    RobotArm(const char* const compName  //!< The component name
+    );
 
-      // ----------------------------------------------------------------------
-      // Component construction and destruction
-      // ----------------------------------------------------------------------
+    //! Destroy RobotArm object
+    ~RobotArm();
 
-      //! Construct RobotArm object
-      RobotArm(
-          const char* const compName //!< The component name
-      );
+    PRIVATE :
 
-      //! Destroy RobotArm object
-      ~RobotArm();
+        // ----------------------------------------------------------------------
+        // Handler implementations for typed input ports
+        // ----------------------------------------------------------------------
 
-    PRIVATE:
+        //! Handler implementation for recv
+        //!
+        //! Receive telemetry
+        void
+        recv_handler(FwIndexType portNum,  //!< The port number
+                     Fw::Buffer& recvBuffer,
+                     const Drv::RecvStatus& recvStatus) override;
 
-      // ----------------------------------------------------------------------
-      // Handler implementations for typed input ports
-      // ----------------------------------------------------------------------
+    //! Handler implementation for run
+    //!
+    //! Periodically request servo telemetry
+    void run_handler(FwIndexType portNum,  //!< The port number
+                     U32 context           //!< The call order
+                     ) override;
 
-      //! Handler implementation for recv
-      //!
-      //! Receive telemetry
-      void recv_handler(
-          FwIndexType portNum, //!< The port number
-          Fw::Buffer& recvBuffer,
-          const Drv::RecvStatus& recvStatus
-      ) override;
+    PRIVATE :
 
-      //! Handler implementation for run
-      //!
-      //! Periodically request servo telemetry
-      void run_handler(
-          FwIndexType portNum, //!< The port number
-          U32 context //!< The call order
-      ) override;
+        // ----------------------------------------------------------------------
+        // Handler implementations for commands
+        // ----------------------------------------------------------------------
 
-    PRIVATE:
+        //! Handler implementation for command SetPosition
+        //!
+        //! Set servo position
+        void
+        SetPosition_cmdHandler(FwOpcodeType opCode,  //!< The opcode
+                               U32 cmdSeq,           //!< The command sequence number
+                               Components::RobotArm_Servo servo,
+                               U16 position) override;
 
-      // ----------------------------------------------------------------------
-      // Handler implementations for commands
-      // ----------------------------------------------------------------------
+    PRIVATE :
 
-      //! Handler implementation for command SetPosition
-      //!
-      //! Set servo position
-      void SetPosition_cmdHandler(
-          FwOpcodeType opCode, //!< The opcode
-          U32 cmdSeq, //!< The command sequence number
-          Components::RobotArm_Servo servo,
-          U16 position
-      ) override;
+        // ----------------------------------------------------------------------
+        // Helper functions
+        // ----------------------------------------------------------------------
+        U8
+        checksumCrc8(const U8* const data, const U32 dataSize);
+    Drv::SendStatus pwmServoSetPosition(const U16 durationMs, const RobotArm_Servo servo, const U16 pwm);
+};
 
-    PRIVATE:
-
-      // ----------------------------------------------------------------------
-      // Helper functions
-      // ----------------------------------------------------------------------
-      U8 checksumCrc8(const U8 *const data, const U32 dataSize);
-      Drv::SendStatus pwmServoSetPosition(const U16 durationMs, const RobotArm_Servo servo, const U16 pwm);
-
-  };
-
-}
+}  // namespace Components
 
 #endif
