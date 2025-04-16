@@ -81,13 +81,7 @@ void RobotArm ::recv_handler(FwIndexType portNum, Fw::Buffer& recvBuffer, const 
     this->deallocate_out(0, recvBuffer);
 }
 
-void RobotArm ::run_handler(FwIndexType portNum, U32 context) {
-    this->readServoPosition(RobotArm_Servo::CLAW);
-    this->readServoPosition(RobotArm_Servo::WRIST);
-    this->readServoPosition(RobotArm_Servo::ELBOW);
-    this->readServoPosition(RobotArm_Servo::SHOULDER);
-    this->readServoPosition(RobotArm_Servo::BASE);
-}
+void RobotArm ::run_handler(FwIndexType portNum, U32 context) {}
 
 // ----------------------------------------------------------------------
 // Handler implementations for commands
@@ -112,6 +106,8 @@ void RobotArm ::SetPosition_cmdHandler(FwOpcodeType opCode,
     Fw::CmdResponse response =
         (status == Drv::SendStatus::SEND_OK) ? Fw::CmdResponse::OK : Fw::CmdResponse::EXECUTION_ERROR;
 
+    Os::Task::delay(Fw::TimeInterval(0, 300000));
+    this->readServoPosition(servo);
     this->cmdResponse_out(opCode, cmdSeq, response);
 }
 
