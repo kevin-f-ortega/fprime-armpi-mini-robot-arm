@@ -44,10 +44,10 @@ void RobotArm ::recv_handler(FwIndexType portNum, Fw::Buffer& recvBuffer, const 
     // command byte = 2
     // length byte = 3
     // data start byte = 4
-    // check sum byte = data-start-byte + length-byte
+    // ? check sum byte = data-start-byte + length-byte
 
     if (data[2] == PWM_SERVO_CMD) {
-        Fw::Logger::log("0x%2x 0x%2x 0x%2x 0x%2x 0x%2x 0x%2x 0x%2x 0x%2x\n", data[0], data[1], data[2], data[3],
+        Fw::Logger::log("0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x\n", data[0], data[1], data[2], data[3],
                         data[4], data[5], data[6], data[7]);
 
         // data[4] is servo, data[5] is cmd, data[6] and data[7] is position
@@ -92,14 +92,6 @@ void RobotArm ::SetPosition_cmdHandler(FwOpcodeType opCode,
                                        Components::RobotArm_Servo servo,
                                        U16 position) {
     static constexpr U16 durationMs = 300;
-    static constexpr U16 lowerBound = 500;
-    static constexpr U16 upperBound = 2500;
-
-    if (position < lowerBound) {
-        position = lowerBound;
-    } else if (position > upperBound) {
-        position = upperBound;
-    }
 
     this->log_ACTIVITY_HI_SetPosition(servo, position);
     Drv::SendStatus status = this->pwmServoSetPosition(durationMs, servo, position);
@@ -150,7 +142,7 @@ Drv::SendStatus RobotArm::pwmServoSetPosition(const U16 durationMs, const RobotA
 Drv::SendStatus RobotArm::readServoPosition(const RobotArm_Servo servo) {
     static constexpr U16 MAX_DATA_SIZE_BYTES = 7;
     static constexpr U8 PWM_SERVO_CMD = 4;
-    U8 dataLength = 2;
+    U8 dataLength = PWM_READ_POSITION_DATA_LEN;
     U8 buf[MAX_DATA_SIZE_BYTES];
     buf[0] = 0xAA;                      // Header
     buf[1] = 0x55;                      // Header

@@ -29,6 +29,7 @@ class RobotArm : public RobotArmComponentBase {
         static constexpr U8 PWM_SERVO_CMD = 0x04;
     static constexpr U8 PWM_SET_POSITION_CMD = 0x01;
     static constexpr U8 PWM_READ_POSITION_CMD = 0x05;
+    static constexpr U8 PWM_READ_POSITION_DATA_LEN = 2;
 
     // ----------------------------------------------------------------------
     // Handler implementations for typed input ports
