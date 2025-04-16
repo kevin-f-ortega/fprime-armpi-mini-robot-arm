@@ -46,15 +46,36 @@ void RobotArm ::recv_handler(FwIndexType portNum, Fw::Buffer& recvBuffer, const 
     // data start byte = 4
     // check sum byte = data-start-byte + length-byte
 
-    if (data[2] == 0x04) {
+    if (data[2] == PWM_SERVO_CMD) {
         Fw::Logger::log("0x%2x 0x%2x 0x%2x 0x%2x 0x%2x 0x%2x 0x%2x 0x%2x\n", data[0], data[1], data[2], data[3],
                         data[4], data[5], data[6], data[7]);
+
+        // data[4] is servo, data[5] is cmd, data[6] and data[7] is position
         RobotArm_ServoStats stat;
         stat.setservo(static_cast<RobotArm_Servo::T>(data[4]));
         U16 pwm = (static_cast<U16>(data[7]) << 8 | data[6]);
         stat.setposition(pwm);
 
-        this->tlmWrite_serverPosition(stat);
+        switch (stat.getservo()) {
+            case RobotArm_Servo::CLAW:
+                this->tlmWrite_clawPosition(stat);
+                break;
+            case RobotArm_Servo::WRIST:
+                this->tlmWrite_wristPosition(stat);
+                break;
+            case RobotArm_Servo::ELBOW:
+                this->tlmWrite_elbowPosition(stat);
+                break;
+            case RobotArm_Servo::SHOULDER:
+                this->tlmWrite_shoulderPosition(stat);
+                break;
+            case RobotArm_Servo::BASE:
+                this->tlmWrite_basePosition(stat);
+                break;
+            default:
+                this->log_WARNING_LO_UnknownServo(stat.getservo());
+                break;
+        }
     }
 
     this->deallocate_out(0, recvBuffer);
@@ -62,6 +83,10 @@ void RobotArm ::recv_handler(FwIndexType portNum, Fw::Buffer& recvBuffer, const 
 
 void RobotArm ::run_handler(FwIndexType portNum, U32 context) {
     this->readServoPosition(RobotArm_Servo::CLAW);
+    this->readServoPosition(RobotArm_Servo::WRIST);
+    this->readServoPosition(RobotArm_Servo::ELBOW);
+    this->readServoPosition(RobotArm_Servo::SHOULDER);
+    this->readServoPosition(RobotArm_Servo::BASE);
 }
 
 // ----------------------------------------------------------------------
@@ -105,15 +130,13 @@ U8 RobotArm::checksumCrc8(const U8* const data, const U32 dataSize) {
 
 Drv::SendStatus RobotArm::pwmServoSetPosition(const U16 durationMs, const RobotArm_Servo servo, const U16 pwm) {
     static constexpr U16 MAX_DATA_SIZE_BYTES = 12;
-    static constexpr U8 PWM_SERVO_CMD = 4;
-    static constexpr U8 CMD = 0x01;
     U8 dataLength = 7;
     U8 buf[MAX_DATA_SIZE_BYTES];
-    buf[0] = 0xAA;           // Header
-    buf[1] = 0x55;           // Header
-    buf[2] = PWM_SERVO_CMD;  // Function
-    buf[3] = dataLength;     // Data packet length
-    buf[4] = CMD;            // command
+    buf[0] = 0xAA;                  // Header
+    buf[1] = 0x55;                  // Header
+    buf[2] = PWM_SERVO_CMD;         // Function
+    buf[3] = dataLength;            // Data packet length
+    buf[4] = PWM_SET_POSITION_CMD;  // command
     buf[5] = durationMs & 0xFF;
     buf[6] = (durationMs >> 8) & 0xFF;
     buf[7] = 1;                         // number of positions
@@ -131,14 +154,13 @@ Drv::SendStatus RobotArm::pwmServoSetPosition(const U16 durationMs, const RobotA
 Drv::SendStatus RobotArm::readServoPosition(const RobotArm_Servo servo) {
     static constexpr U16 MAX_DATA_SIZE_BYTES = 7;
     static constexpr U8 PWM_SERVO_CMD = 4;
-    static constexpr U8 CMD = 0x05;
     U8 dataLength = 2;
     U8 buf[MAX_DATA_SIZE_BYTES];
     buf[0] = 0xAA;                      // Header
     buf[1] = 0x55;                      // Header
     buf[2] = PWM_SERVO_CMD;             // Function
     buf[3] = dataLength;                // Data packet length
-    buf[4] = CMD;                       // command
+    buf[4] = PWM_READ_POSITION_CMD;     // command
     buf[5] = static_cast<U8>(servo.e);  // servo ID
     // When calculating the checksum, omit the 2 header bytes
     U8 crc = this->checksumCrc8(buf + 2, (dataLength + 2));

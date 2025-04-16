@@ -26,17 +26,20 @@ class RobotArm : public RobotArmComponentBase {
 
     PRIVATE :
 
-        // ----------------------------------------------------------------------
-        // Handler implementations for typed input ports
-        // ----------------------------------------------------------------------
+        static constexpr U8 PWM_SERVO_CMD = 0x04;
+    static constexpr U8 PWM_SET_POSITION_CMD = 0x01;
+    static constexpr U8 PWM_READ_POSITION_CMD = 0x05;
 
-        //! Handler implementation for recv
-        //!
-        //! Receive telemetry
-        void
-        recv_handler(FwIndexType portNum,  //!< The port number
-                     Fw::Buffer& recvBuffer,
-                     const Drv::RecvStatus& recvStatus) override;
+    // ----------------------------------------------------------------------
+    // Handler implementations for typed input ports
+    // ----------------------------------------------------------------------
+
+    //! Handler implementation for recv
+    //!
+    //! Receive telemetry
+    void recv_handler(FwIndexType portNum,  //!< The port number
+                      Fw::Buffer& recvBuffer,
+                      const Drv::RecvStatus& recvStatus) override;
 
     //! Handler implementation for run
     //!

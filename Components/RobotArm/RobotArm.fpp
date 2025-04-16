@@ -22,7 +22,11 @@ module Components {
         )
 
         @ Servos position
-        telemetry serverPosition: ServoStats
+        telemetry clawPosition: ServoStats
+        telemetry wristPosition: ServoStats
+        telemetry elbowPosition: ServoStats
+        telemetry shoulderPosition: ServoStats
+        telemetry basePosition: ServoStats
 
         @ Event indicating commanded servor and position
         event SetPosition(
@@ -31,6 +35,13 @@ module Components {
         ) \
         severity activity high \
         format "Setting servo {} to position {}"
+
+        @ Event indicating we received an unknown servo
+        event UnknownServo(
+          servo: Servo
+        ) \
+        severity warning low \
+        format "Received unknown servo {}"
 
         @ Periodically request servo telemetry
         async input port run: Svc.Sched
