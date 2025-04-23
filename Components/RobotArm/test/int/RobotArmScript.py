@@ -21,21 +21,30 @@ def test_cmd_no_op(fprime_test_api):
     time.sleep(1)
 
     fprime_test_api.send_and_assert_command("ArmPiMiniRobotArm.robotArm.SetPosition", ["CLAW", 2500])
+    time.sleep(1)
     fprime_test_api.send_and_assert_command("ArmPiMiniRobotArm.robotArm.SetPosition", ["SHOULDER", 2000])
+    time.sleep(1)
     fprime_test_api.send_and_assert_command("ArmPiMiniRobotArm.robotArm.SetPosition", ["ELBOW", 2500])
+    time.sleep(1)
     fprime_test_api.send_and_assert_command("ArmPiMiniRobotArm.robotArm.SetPosition", ["WRIST", 1500])
 
     time.sleep(1)
     fprime_test_api.send_and_assert_command("ArmPiMiniRobotArm.robotArm.SetPosition", ["SHOULDER", 2100])
+    time.sleep(1)
     fprime_test_api.send_and_assert_command("ArmPiMiniRobotArm.robotArm.SetPosition", ["CLAW", 1400])
 
     time.sleep(1)
 
     fprime_test_api.send_and_assert_command("ArmPiMiniRobotArm.robotArm.SetPosition", ["SHOULDER", 1500])
+    time.sleep(1)
     fprime_test_api.send_and_assert_command("ArmPiMiniRobotArm.robotArm.SetPosition", ["BASE", 500])
+    time.sleep(1)
     fprime_test_api.send_and_assert_command("ArmPiMiniRobotArm.robotArm.SetPosition", ["ELBOW", 1700])
+    time.sleep(1)
     fprime_test_api.send_and_assert_command("ArmPiMiniRobotArm.robotArm.SetPosition", ["WRIST", 500])
+    time.sleep(1)
     fprime_test_api.send_and_assert_command("ArmPiMiniRobotArm.robotArm.SetPosition", ["SHOULDER", 2400])
+    time.sleep(1)
     fprime_test_api.send_and_assert_command("ArmPiMiniRobotArm.robotArm.SetPosition", ["CLAW", 2300])
     time.sleep(1)
 
