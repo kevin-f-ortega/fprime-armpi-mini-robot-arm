@@ -32,6 +32,8 @@ module ArmPiMiniRobotArm {
     instance timer
     instance comDriver
     instance cmdSeq
+    instance robotArm
+    instance uartArm
 
   # ----------------------------------------------------------------------
   # Pattern graph specifiers
@@ -119,6 +121,7 @@ module ArmPiMiniRobotArm {
       rateGroup3.RateGroupMemberOut[2] -> DataProducts.dpBufferManager.schedIn
       rateGroup3.RateGroupMemberOut[3] -> DataProducts.dpWriter.schedIn
       rateGroup3.RateGroupMemberOut[4] -> DataProducts.dpMgr.schedIn
+      rateGroup3.RateGroupMemberOut[5] -> robotArm.run
     }
 
     connections CdhCore_cmdSeq {
@@ -127,8 +130,15 @@ module ArmPiMiniRobotArm {
       CdhCore.cmdDisp.seqCmdStatus -> cmdSeq.cmdResponseIn
     }
 
-    connections Deployment {
-
+    connections RobotArm {
+      # uartArm allocates buffer to store incoming data from UART device
+      uartArm.allocate -> ComCcsds.commsBufferManager.bufferGetCallee
+      # uartArm sends received data to robotArm
+      uartArm.$recv -> robotArm.$recv
+      # robotArm deallocates received buffer from uartArm
+      robotArm.deallocate -> ComCcsds.commsBufferManager.bufferSendIn
+      # robotArm sends local buffer to uartArm. No deallocation needed
+      robotArm.$send -> uartArm.$send
     }
 
   }
