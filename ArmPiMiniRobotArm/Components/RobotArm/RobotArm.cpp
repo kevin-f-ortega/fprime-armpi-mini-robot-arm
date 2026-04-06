@@ -35,7 +35,7 @@ RobotArm ::~RobotArm() {}
 // Handler implementations for typed input ports
 // ----------------------------------------------------------------------
 
-void RobotArm ::recv_handler(FwIndexType portNum, Fw::Buffer& recvBuffer, const Drv::RecvStatus& recvStatus) {
+void RobotArm ::recv_handler(FwIndexType portNum, Fw::Buffer& recvBuffer, const Drv::ByteStreamStatus& recvStatus) {
     U8* data = recvBuffer.getData();
     FW_ASSERT(data != nullptr);
 
@@ -52,11 +52,11 @@ void RobotArm ::recv_handler(FwIndexType portNum, Fw::Buffer& recvBuffer, const 
 
         // data[4] is servo, data[5] is cmd, data[6] and data[7] is position
         RobotArm_ServoStats stat;
-        stat.setservo(static_cast<RobotArm_Servo::T>(data[4]));
+        stat.set_servo(static_cast<RobotArm_Servo::T>(data[4]));
         U16 pwm = (static_cast<U16>(data[7]) << 8 | data[6]);
-        stat.setposition(pwm);
+        stat.set_position(pwm);
 
-        switch (stat.getservo()) {
+        switch (stat.get_servo()) {
             case RobotArm_Servo::CLAW:
                 this->tlmWrite_clawPosition(stat);
                 break;
@@ -73,7 +73,7 @@ void RobotArm ::recv_handler(FwIndexType portNum, Fw::Buffer& recvBuffer, const 
                 this->tlmWrite_basePosition(stat);
                 break;
             default:
-                this->log_WARNING_LO_UnknownServo(stat.getservo());
+                this->log_WARNING_LO_UnknownServo(stat.get_servo());
                 break;
         }
     }
@@ -94,9 +94,9 @@ void RobotArm ::SetPosition_cmdHandler(FwOpcodeType opCode,
     static constexpr U16 durationMs = 300;
 
     this->log_ACTIVITY_HI_SetPosition(servo, position);
-    Drv::SendStatus status = this->pwmServoSetPosition(durationMs, servo, position);
+    Drv::ByteStreamStatus status = this->pwmServoSetPosition(durationMs, servo, position);
     Fw::CmdResponse response =
-        (status == Drv::SendStatus::SEND_OK) ? Fw::CmdResponse::OK : Fw::CmdResponse::EXECUTION_ERROR;
+        (status == Drv::ByteStreamStatus::OP_OK) ? Fw::CmdResponse::OK : Fw::CmdResponse::EXECUTION_ERROR;
 
     Os::Task::delay(Fw::TimeInterval(0, 300000));
     this->readServoPosition(servo);
@@ -116,7 +116,7 @@ U8 RobotArm::checksumCrc8(const U8* const data, const U32 dataSize) {
     return crc;
 }
 
-Drv::SendStatus RobotArm::pwmServoSetPosition(const U16 durationMs, const RobotArm_Servo servo, const U16 pwm) {
+Drv::ByteStreamStatus RobotArm::pwmServoSetPosition(const U16 durationMs, const RobotArm_Servo servo, const U16 pwm) {
     static constexpr U16 MAX_DATA_SIZE_BYTES = 12;
     U8 dataLength = 7;
     U8 buf[MAX_DATA_SIZE_BYTES];
@@ -135,11 +135,11 @@ Drv::SendStatus RobotArm::pwmServoSetPosition(const U16 durationMs, const RobotA
     U8 crc = this->checksumCrc8(buf + 2, (dataLength + 2));
     buf[11] = crc;
     Fw::Buffer buffer(buf, MAX_DATA_SIZE_BYTES);
-    Drv::SendStatus status = this->send_out(0, buffer);
+    Drv::ByteStreamStatus status = this->send_out(0, buffer);
     return status;
 }
 
-Drv::SendStatus RobotArm::readServoPosition(const RobotArm_Servo servo) {
+Drv::ByteStreamStatus RobotArm::readServoPosition(const RobotArm_Servo servo) {
     static constexpr U16 MAX_DATA_SIZE_BYTES = 7;
     static constexpr U8 PWM_SERVO_CMD = 4;
     U8 dataLength = PWM_READ_POSITION_DATA_LEN;
@@ -154,7 +154,7 @@ Drv::SendStatus RobotArm::readServoPosition(const RobotArm_Servo servo) {
     U8 crc = this->checksumCrc8(buf + 2, (dataLength + 2));
     buf[6] = crc;
     Fw::Buffer buffer(buf, MAX_DATA_SIZE_BYTES);
-    Drv::SendStatus status = this->send_out(0, buffer);
+    Drv::ByteStreamStatus status = this->send_out(0, buffer);
     return status;
 }
 }  // namespace Components

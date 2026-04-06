@@ -10,97 +10,103 @@ module ArmPiMiniRobotArm {
     rateGroup3
   }
 
-  topology ArmPiMiniRobotArm {
+  topology Deployment {
 
-    # ----------------------------------------------------------------------
-    # Instances used in the topology
-    # ----------------------------------------------------------------------
-
-    instance $health
-    instance blockDrv
-    instance tlmSend
-    instance cmdDisp
-    instance cmdSeq
-    instance comDriver
-    instance comQueue
-    instance comStub
-    instance deframer
-    instance eventLogger
-    instance fatalAdapter
-    instance fatalHandler
-    instance fileDownlink
-    instance fileManager
-    instance fileUplink
-    instance bufferManager
-    instance framer
+  # ----------------------------------------------------------------------
+  # Subtopology imports
+  # ----------------------------------------------------------------------
+    import CdhCore.Subtopology
+    import ComCcsds.Subtopology
+    import DataProducts.Subtopology
+    import FileHandling.Subtopology
+    
+  # ----------------------------------------------------------------------
+  # Instances used in the topology
+  # ----------------------------------------------------------------------
     instance chronoTime
-    instance prmDb
     instance rateGroup1
     instance rateGroup2
     instance rateGroup3
     instance rateGroupDriver
-    instance robotArm
-    instance textLogger
     instance systemResources
-    instance uartArm
+    instance timer
+    instance comDriver
+    instance cmdSeq
 
-    # ----------------------------------------------------------------------
-    # Pattern graph specifiers
-    # ----------------------------------------------------------------------
+  # ----------------------------------------------------------------------
+  # Pattern graph specifiers
+  # ----------------------------------------------------------------------
 
-    command connections instance cmdDisp
-
-    event connections instance eventLogger
-
-    param connections instance prmDb
-
-    telemetry connections instance tlmSend
-
-    text event connections instance textLogger
-
+    command connections instance CdhCore.cmdDisp
+    event connections instance CdhCore.events
+    telemetry connections instance CdhCore.tlmSend
+    text event connections instance CdhCore.textLogger
+    health connections instance CdhCore.$health
+    param connections instance FileHandling.prmDb
     time connections instance chronoTime
 
-    health connections instance $health
+  # ----------------------------------------------------------------------
+  # Telemetry packets (only used when TlmPacketizer is used)
+  # ----------------------------------------------------------------------
 
-    # ----------------------------------------------------------------------
-    # Direct graph specifiers
-    # ----------------------------------------------------------------------
+    # include "DeploymentPackets.fppi"
 
-    connections Downlink {
+  # ----------------------------------------------------------------------
+  # Direct graph specifiers
+  # ----------------------------------------------------------------------
 
-      eventLogger.PktSend -> comQueue.comQueueIn[0]
-      tlmSend.PktSend -> comQueue.comQueueIn[1]
-      fileDownlink.bufferSendOut -> comQueue.buffQueueIn[0]
+    connections ComCcsds_CdhCore {
+      # Core events and telemetry to communication queue
+      CdhCore.events.PktSend -> ComCcsds.comQueue.comPacketQueueIn[ComCcsds.Ports_ComPacketQueue.EVENTS]
+      CdhCore.tlmSend.PktSend -> ComCcsds.comQueue.comPacketQueueIn[ComCcsds.Ports_ComPacketQueue.TELEMETRY]
 
-      comQueue.comQueueSend -> framer.comIn
-      comQueue.buffQueueSend -> framer.bufferIn
-
-      framer.framedAllocate -> bufferManager.bufferGetCallee
-      framer.framedOut -> comStub.comDataIn
-      framer.bufferDeallocate -> fileDownlink.bufferReturn
-
-      comDriver.deallocate -> bufferManager.bufferSendIn
-      comDriver.ready -> comStub.drvConnected
-
-      comStub.comStatus -> framer.comStatusIn
-      framer.comStatusOut -> comQueue.comStatusIn
-      comStub.drvDataOut -> comDriver.$send
-
+      # Router to Command Dispatcher
+      ComCcsds.fprimeRouter.commandOut -> CdhCore.cmdDisp.seqCmdBuff
+      CdhCore.cmdDisp.seqCmdStatus -> ComCcsds.fprimeRouter.cmdResponseIn
+      
     }
 
-    connections FaultProtection {
-      eventLogger.FatalAnnounce -> fatalHandler.FatalReceive
+    connections ComCcsds_FileHandling {
+      # File Downlink to Communication Queue
+      FileHandling.fileDownlink.bufferSendOut -> ComCcsds.comQueue.bufferQueueIn[ComCcsds.Ports_ComBufferQueue.FILE]
+      ComCcsds.comQueue.bufferReturnOut[ComCcsds.Ports_ComBufferQueue.FILE] -> FileHandling.fileDownlink.bufferReturn
+
+      # Router to File Uplink
+      ComCcsds.fprimeRouter.fileOut -> FileHandling.fileUplink.bufferSendIn
+      FileHandling.fileUplink.bufferSendOut -> ComCcsds.fprimeRouter.fileBufferReturnIn
+    }
+
+    connections Communications {
+      # ComDriver buffer allocations
+      comDriver.allocate      -> ComCcsds.commsBufferManager.bufferGetCallee
+      comDriver.deallocate    -> ComCcsds.commsBufferManager.bufferSendIn
+      
+      # ComDriver <-> ComStub (Uplink)
+      comDriver.$recv                     -> ComCcsds.comStub.drvReceiveIn
+      ComCcsds.comStub.drvReceiveReturnOut -> comDriver.recvReturnIn
+      
+      # ComStub <-> ComDriver (Downlink)
+      ComCcsds.comStub.drvSendOut      -> comDriver.$send
+      comDriver.ready         -> ComCcsds.comStub.drvConnected
+    }
+
+    connections FileHandling_DataProducts {
+      # Data Products to File Downlink
+      DataProducts.dpCat.fileOut -> FileHandling.fileDownlink.SendFile
+      FileHandling.fileDownlink.FileComplete -> DataProducts.dpCat.fileDone
     }
 
     connections RateGroups {
-      # Block driver
-      blockDrv.CycleOut -> rateGroupDriver.CycleIn
+      # timer to drive rate group
+      timer.CycleOut -> rateGroupDriver.CycleIn
 
       # Rate group 1
       rateGroupDriver.CycleOut[Ports_RateGroups.rateGroup1] -> rateGroup1.CycleIn
-      rateGroup1.RateGroupMemberOut[0] -> tlmSend.Run
-      rateGroup1.RateGroupMemberOut[1] -> fileDownlink.Run
+      rateGroup1.RateGroupMemberOut[0] -> CdhCore.tlmSend.Run
+      rateGroup1.RateGroupMemberOut[1] -> FileHandling.fileDownlink.Run
       rateGroup1.RateGroupMemberOut[2] -> systemResources.run
+      rateGroup1.RateGroupMemberOut[3] -> ComCcsds.comQueue.run
+      rateGroup1.RateGroupMemberOut[4] -> ComCcsds.aggregator.timeout
 
       # Rate group 2
       rateGroupDriver.CycleOut[Ports_RateGroups.rateGroup2] -> rateGroup2.CycleIn
@@ -108,43 +114,21 @@ module ArmPiMiniRobotArm {
 
       # Rate group 3
       rateGroupDriver.CycleOut[Ports_RateGroups.rateGroup3] -> rateGroup3.CycleIn
-      rateGroup3.RateGroupMemberOut[0] -> $health.Run
-      rateGroup3.RateGroupMemberOut[1] -> blockDrv.Sched
-      rateGroup3.RateGroupMemberOut[2] -> bufferManager.schedIn
-      rateGroup3.RateGroupMemberOut[3] -> robotArm.run
+      rateGroup3.RateGroupMemberOut[0] -> CdhCore.$health.Run
+      rateGroup3.RateGroupMemberOut[1] -> ComCcsds.commsBufferManager.schedIn
+      rateGroup3.RateGroupMemberOut[2] -> DataProducts.dpBufferManager.schedIn
+      rateGroup3.RateGroupMemberOut[3] -> DataProducts.dpWriter.schedIn
+      rateGroup3.RateGroupMemberOut[4] -> DataProducts.dpMgr.schedIn
     }
 
-    connections Sequencer {
-      cmdSeq.comCmdOut -> cmdDisp.seqCmdBuff
-      cmdDisp.seqCmdStatus -> cmdSeq.cmdResponseIn
+    connections CdhCore_cmdSeq {
+      # Command Sequencer
+      cmdSeq.comCmdOut -> CdhCore.cmdDisp.seqCmdBuff
+      CdhCore.cmdDisp.seqCmdStatus -> cmdSeq.cmdResponseIn
     }
 
-    connections Uplink {
+    connections Deployment {
 
-      comDriver.allocate -> bufferManager.bufferGetCallee
-      comDriver.$recv -> comStub.drvDataIn
-      comStub.comDataOut -> deframer.framedIn
-
-      deframer.framedDeallocate -> bufferManager.bufferSendIn
-      deframer.comOut -> cmdDisp.seqCmdBuff
-
-      cmdDisp.seqCmdStatus -> deframer.cmdResponseIn
-
-      deframer.bufferAllocate -> bufferManager.bufferGetCallee
-      deframer.bufferOut -> fileUplink.bufferSendIn
-      deframer.bufferDeallocate -> bufferManager.bufferSendIn
-      fileUplink.bufferSendOut -> bufferManager.bufferSendIn
-    }
-
-    connections ArmPiMiniRobotArm {
-      # uartArm allocates buffer to store incoming data from UART device
-      uartArm.allocate -> bufferManager.bufferGetCallee
-      # uartArm sends received data to robotArm
-      uartArm.$recv -> robotArm.$recv
-      # robotArm deallocates received buffer from uartArm
-      robotArm.deallocate -> bufferManager.bufferSendIn
-      # robotArm sends local buffer to uartArm. No deallocation needed
-      robotArm.$send -> uartArm.$send
     }
 
   }

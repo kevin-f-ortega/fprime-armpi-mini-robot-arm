@@ -40,7 +40,7 @@ class RobotArm : public RobotArmComponentBase {
     //! Receive telemetry
     void recv_handler(FwIndexType portNum,  //!< The port number
                       Fw::Buffer& recvBuffer,
-                      const Drv::RecvStatus& recvStatus) override;
+                      const Drv::ByteStreamStatus& recvStatus) override;
 
     //! Handler implementation for run
     //!
@@ -49,7 +49,7 @@ class RobotArm : public RobotArmComponentBase {
                      U32 context           //!< The call order
                      ) override;
 
-    PRIVATE :
+    private :
 
         // ----------------------------------------------------------------------
         // Handler implementations for commands
@@ -64,7 +64,7 @@ class RobotArm : public RobotArmComponentBase {
                                Components::RobotArm_Servo servo,
                                U16 position) override;
 
-    PRIVATE :
+    private :
 
         // ----------------------------------------------------------------------
         // Helper functions
@@ -72,9 +72,9 @@ class RobotArm : public RobotArmComponentBase {
         U8
         checksumCrc8(const U8* const data, const U32 dataSize);
 
-    Drv::SendStatus pwmServoSetPosition(const U16 durationMs, const RobotArm_Servo servo, const U16 pwm);
+    Drv::ByteStreamStatus pwmServoSetPosition(const U16 durationMs, const RobotArm_Servo servo, const U16 pwm);
 
-    Drv::SendStatus readServoPosition(const RobotArm_Servo servo);
+    Drv::ByteStreamStatus readServoPosition(const RobotArm_Servo servo);
 };
 
 }  // namespace Components

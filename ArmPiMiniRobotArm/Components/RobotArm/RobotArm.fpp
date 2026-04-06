@@ -47,7 +47,7 @@ module Components {
         async input port run: Svc.Sched
 
         @ Receive telemetry
-        async input port $recv: Drv.ByteStreamRecv
+        async input port $recv: Drv.ByteStreamData
 
         @ Deallocate received buffer
         output port deallocate: Fw.BufferSend

@@ -4,7 +4,7 @@
 //
 // ======================================================================
 // Used to access topology functions
-#include <ArmPiMiniRobotArm/Deployment/Top/ArmPiMiniRobotArmTopology.hpp>
+#include <ArmPiMiniRobotArm/Deployment/Top/DeploymentTopology.hpp>
 // OSAL initialization
 #include <Os/Os.hpp>
 // Used for signal handling shutdown
@@ -34,7 +34,7 @@ void print_usage(const char* app) {
  * @param signum
  */
 static void signalHandler(int signum) {
-    ArmPiMiniRobotArm::stopSimulatedCycle();
+    ArmPiMiniRobotArm::stopRateGroups();
 }
 
 /**
@@ -51,6 +51,7 @@ int main(int argc, char* argv[]) {
     I32 option = 0;
     CHAR* hostname = nullptr;
     U16 port_number = 0;
+
     Os::init();
 
     // Loop while reading the getopt supplied options
@@ -74,7 +75,7 @@ int main(int argc, char* argv[]) {
                 return (option == 'h') ? 0 : 1;
         }
     }
-    // Object for communicating state to the reference topology
+    // Object for communicating state to the topology
     ArmPiMiniRobotArm::TopologyState inputs;
     inputs.hostname = hostname;
     inputs.port = port_number;
@@ -86,7 +87,7 @@ int main(int argc, char* argv[]) {
 
     // Setup, cycle, and teardown topology
     ArmPiMiniRobotArm::setupTopology(inputs);
-    ArmPiMiniRobotArm::startSimulatedCycle(Fw::TimeInterval(1,0));  // Program loop cycling rate groups at 1Hz
+    ArmPiMiniRobotArm::startRateGroups(Fw::TimeInterval(1,0));  // Program loop cycling rate groups at 1Hz
     ArmPiMiniRobotArm::teardownTopology(inputs);
     (void)printf("Exiting...\n");
     return 0;
