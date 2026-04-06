@@ -4,7 +4,7 @@
 //
 // ======================================================================
 // Provides access to autocoded functions
-#include <ArmPiMiniRobotArm/Top/ArmPiMiniRobotArmTopologyAc.hpp>
+#include <ArmPiMiniRobotArm/Deployment/Top/ArmPiMiniRobotArmTopologyAc.hpp>
 // Note: Uncomment when using Svc:TlmPacketizer
 //#include <ArmPiMiniRobotArm/Top/ArmPiMiniRobotArmPacketsAc.hpp>
 

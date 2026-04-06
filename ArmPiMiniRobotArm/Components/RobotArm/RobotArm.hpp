@@ -7,7 +7,7 @@
 #ifndef Components_RobotArm_HPP
 #define Components_RobotArm_HPP
 
-#include "Components/RobotArm/RobotArmComponentAc.hpp"
+#include "ArmPiMiniRobotArm/Components/RobotArm/RobotArmComponentAc.hpp"
 
 namespace Components {
 
@@ -24,9 +24,9 @@ class RobotArm : public RobotArmComponentBase {
     //! Destroy RobotArm object
     ~RobotArm();
 
-    PRIVATE :
+    private :
 
-        static constexpr U8 PWM_SERVO_CMD = 0x04;
+    static constexpr U8 PWM_SERVO_CMD = 0x04;
     static constexpr U8 PWM_SET_POSITION_CMD = 0x01;
     static constexpr U8 PWM_READ_POSITION_CMD = 0x05;
     static constexpr U8 PWM_READ_POSITION_DATA_LEN = 2;

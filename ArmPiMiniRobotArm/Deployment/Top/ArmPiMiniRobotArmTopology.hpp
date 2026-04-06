@@ -7,7 +7,7 @@
 #define ARMPIMINIROBOTARM_ARMPIMINIROBOTARMTOPOLOGY_HPP
 // Included for access to ArmPiMiniRobotArm::TopologyState and ArmPiMiniRobotArm::ConfigObjects::pingEntries. These definitions are required by the
 // autocoder, but are also used in this hand-coded topology.
-#include <ArmPiMiniRobotArm/Top/ArmPiMiniRobotArmTopologyDefs.hpp>
+#include <ArmPiMiniRobotArm/Deployment/Top/ArmPiMiniRobotArmTopologyDefs.hpp>
 
 // Remove unnecessary ArmPiMiniRobotArm:: qualifications
 using namespace ArmPiMiniRobotArm;

@@ -4,7 +4,7 @@
 //
 // ======================================================================
 // Used to access topology functions
-#include <ArmPiMiniRobotArm/Top/ArmPiMiniRobotArmTopology.hpp>
+#include <ArmPiMiniRobotArm/Deployment/Top/ArmPiMiniRobotArmTopology.hpp>
 // OSAL initialization
 #include <Os/Os.hpp>
 // Used for signal handling shutdown

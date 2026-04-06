@@ -4,7 +4,7 @@
 // \brief  cpp file for RobotArm component implementation class
 // ======================================================================
 
-#include "Components/RobotArm/RobotArm.hpp"
+#include "RobotArm.hpp"
 #include "Os/Console.hpp"
 
 namespace Components {
