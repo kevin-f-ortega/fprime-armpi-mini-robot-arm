@@ -1,2 +1,0 @@
-#!/bin/bash
-~/ArmPiMiniRobotArm/bin/ArmPiMiniRobotArm -a 0.0.0.0 -p 50000

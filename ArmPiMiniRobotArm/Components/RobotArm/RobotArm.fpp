@@ -12,29 +12,29 @@ module Components {
 
         struct ServoStats {
           servo: Servo
-          position: U16
+          angle: F32 @< Servo angle in degrees (0.0-180.0)
         }
 
-        @ Set servo position
+        @ Set servo position by angle
         async command SetPosition(
           servo: Servo
-          position: U16
+          angle: F32 @< Servo angle in degrees (0.0-180.0)
         )
 
-        @ Servos position
+        @ Servo angles in degrees
         telemetry clawPosition: ServoStats
         telemetry wristPosition: ServoStats
         telemetry elbowPosition: ServoStats
         telemetry shoulderPosition: ServoStats
         telemetry basePosition: ServoStats
 
-        @ Event indicating commanded servor and position
+        @ Event indicating commanded servo and angle
         event SetPosition(
           servo: Servo
-          position: U16
+          angle: F32
         ) \
         severity activity high \
-        format "Setting servo {} to position {}"
+        format "Setting servo {} to angle {} degrees"
 
         @ Event indicating we received an unknown servo
         event UnknownServo(
@@ -47,7 +47,7 @@ module Components {
         async input port run: Svc.Sched
 
         @ Receive telemetry
-        async input port $recv: Drv.ByteStreamRecv
+        async input port $recv: Drv.ByteStreamData
 
         @ Deallocate received buffer
         output port deallocate: Fw.BufferSend
