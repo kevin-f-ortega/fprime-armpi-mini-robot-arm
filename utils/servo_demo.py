@@ -2,6 +2,7 @@
 """
 Simple demo script to control ArmPi mini robot arm servos via serial protocol.
 Matches the protocol used in the F Prime RobotArm component.
+Takes angles (0-180 degrees) and converts to PWM values.
 """
 import serial
 import time
@@ -46,18 +47,40 @@ def calculate_crc8(data):
     return crc
 
 
-def set_servo_position(ser, servo_id, pwm_value, duration_ms=300):
+def angle_to_pwm(angle):
     """
-    Send command to set servo position.
+    Convert servo angle to PWM pulse width.
+
+    Standard servo mapping:
+        0° = 500µs
+        90° = 1500µs (center)
+        180° = 2500µs
+
+    Args:
+        angle: Angle in degrees (0-180)
+
+    Returns:
+        PWM pulse width in microseconds (500-2500)
+    """
+    angle = max(0.0, min(180.0, angle))  # Clamp to 0-180
+    pwm = int((angle / 0.09) + 500)
+    return pwm
+
+
+def set_servo_position(ser, servo_id, angle, duration_ms=300):
+    """
+    Send command to set servo position by angle.
 
     Args:
         ser: Serial port object
         servo_id: Servo ID (1, 3, 4, 5, or 6)
-        pwm_value: PWM pulse width in microseconds (500-2500)
+        angle: Servo angle in degrees (0-180)
         duration_ms: Movement duration in milliseconds (default: 300)
     """
-    # Clamp values to safe ranges
-    pwm_value = max(500, min(2500, pwm_value))
+    # Convert angle to PWM value
+    pwm_value = angle_to_pwm(angle)
+
+    # Clamp duration to safe range
     duration_ms = max(0, min(30000, duration_ms))
 
     data_length = 7
@@ -83,18 +106,18 @@ def set_servo_position(ser, servo_id, pwm_value, duration_ms=300):
 
     # Send the command
     ser.write(buf)
-    print(f"Servo {servo_id}: PWM={pwm_value}, Duration={duration_ms}ms")
+    print(f"Servo {servo_id}: Angle={angle:6.1f}°, PWM={pwm_value:4d}µs, Duration={duration_ms}ms")
 
 
 def main():
-    """Demo: Move each servo through different positions."""
+    """Demo: Move each servo through different angles."""
 
     # Connect to serial port
     print("Connecting to /dev/ttyAMC0...")
     try:
         ser = serial.Serial(
-            port='/dev/ttyAMC0',
-            baudrate=9600,
+            port='/dev/ttyAMA0',
+            baudrate=1000000,
             timeout=1
         )
         print(f"Connected! Baudrate: {ser.baudrate}")
@@ -115,21 +138,21 @@ def main():
             (SERVO_BASE, "Base")
         ]
 
-        # Test each servo with 3 positions
-        positions = [1500, 2000, 1000, 1500]  # Center, right, left, center
+        # Test each servo with different angles (in degrees)
+        angles = [90, 135, 45, 90]  # Center, right, left, back to center
 
         for servo_id, servo_name in servos:
             print(f"\n--- Testing {servo_name} (Servo {servo_id}) ---")
-            for pwm in positions:
-                set_servo_position(ser, servo_id, pwm, duration_ms=500)
+            for angle in angles:
+                set_servo_position(ser, servo_id, angle, duration_ms=500)
                 time.sleep(1.0)  # IMPORTANT: 1 second delay between commands
 
         print("\n=== Demo complete! ===")
-        print("Returning all servos to center position...\n")
+        print("Returning all servos to center position (90°)...\n")
 
-        # Return all servos to center
+        # Return all servos to center (90 degrees)
         for servo_id, servo_name in servos:
-            set_servo_position(ser, servo_id, 1500, duration_ms=500)
+            set_servo_position(ser, servo_id, 90, duration_ms=500)
             time.sleep(1.0)
 
         print("Done!")
