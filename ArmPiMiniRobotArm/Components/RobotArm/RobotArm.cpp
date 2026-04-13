@@ -50,11 +50,16 @@ void RobotArm ::recv_handler(FwIndexType portNum, Fw::Buffer& recvBuffer, const 
         Fw::Logger::log("0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x\n", data[0], data[1], data[2], data[3],
                         data[4], data[5], data[6], data[7]);
 
-        // data[4] is servo, data[5] is cmd, data[6] and data[7] is position
+        // data[4] is servo, data[5] is cmd, data[6] and data[7] is PWM position
         RobotArm_ServoStats stat;
         stat.set_servo(static_cast<RobotArm_Servo::T>(data[4]));
+
+        // Extract PWM value (little-endian)
         U16 pwm = (static_cast<U16>(data[7]) << 8 | data[6]);
-        stat.set_position(pwm);
+
+        // Convert PWM to angle for telemetry
+        F32 angle = this->pwmToAngle(pwm);
+        stat.set_angle(angle);
 
         switch (stat.get_servo()) {
             case RobotArm_Servo::CLAW:
@@ -90,11 +95,14 @@ void RobotArm ::run_handler(FwIndexType portNum, U32 context) {}
 void RobotArm ::SetPosition_cmdHandler(FwOpcodeType opCode,
                                        U32 cmdSeq,
                                        Components::RobotArm_Servo servo,
-                                       U16 position) {
+                                       F32 angle) {
     static constexpr U16 durationMs = 300;
 
-    this->log_ACTIVITY_HI_SetPosition(servo, position);
-    Drv::ByteStreamStatus status = this->pwmServoSetPosition(durationMs, servo, position);
+    // Convert angle to PWM value
+    U16 pwm = this->angleToPwm(angle);
+
+    this->log_ACTIVITY_HI_SetPosition(servo, angle);
+    Drv::ByteStreamStatus status = this->pwmServoSetPosition(durationMs, servo, pwm);
     Fw::CmdResponse response =
         (status == Drv::ByteStreamStatus::OP_OK) ? Fw::CmdResponse::OK : Fw::CmdResponse::EXECUTION_ERROR;
 
@@ -114,6 +122,45 @@ U8 RobotArm::checksumCrc8(const U8* const data, const U32 dataSize) {
         crc = CRC8_TABLE[crc ^ data[i]];
     }
     return crc;
+}
+
+U16 RobotArm::angleToPwm(const F32 angle) {
+    // Clamp angle to valid range (0-180 degrees)
+    F32 clampedAngle = angle;
+    if (clampedAngle < 0.0f) {
+        clampedAngle = 0.0f;
+    } else if (clampedAngle > 180.0f) {
+        clampedAngle = 180.0f;
+    }
+
+    // Convert angle to PWM: 0° = 500µs, 90° = 1500µs, 180° = 2500µs
+    // Formula: pwm = (angle / 0.09) + 500
+    U16 pwm = static_cast<U16>((clampedAngle / 0.09f) + 500.0f);
+
+    // Ensure PWM is within safe bounds
+    if (pwm < 500) {
+        pwm = 500;
+    } else if (pwm > 2500) {
+        pwm = 2500;
+    }
+
+    return pwm;
+}
+
+F32 RobotArm::pwmToAngle(const U16 pwm) {
+    // Clamp PWM to valid range (500-2500 microseconds)
+    U16 clampedPwm = pwm;
+    if (clampedPwm < 500) {
+        clampedPwm = 500;
+    } else if (clampedPwm > 2500) {
+        clampedPwm = 2500;
+    }
+
+    // Convert PWM to angle: 500µs = 0°, 1500µs = 90°, 2500µs = 180°
+    // Formula: angle = (pwm - 500) * 0.09
+    F32 angle = static_cast<F32>(clampedPwm - 500) * 0.09f;
+
+    return angle;
 }
 
 Drv::ByteStreamStatus RobotArm::pwmServoSetPosition(const U16 durationMs, const RobotArm_Servo servo, const U16 pwm) {

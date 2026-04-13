@@ -57,12 +57,12 @@ class RobotArm : public RobotArmComponentBase {
 
         //! Handler implementation for command SetPosition
         //!
-        //! Set servo position
+        //! Set servo position by angle
         void
         SetPosition_cmdHandler(FwOpcodeType opCode,  //!< The opcode
                                U32 cmdSeq,           //!< The command sequence number
                                Components::RobotArm_Servo servo,
-                               U16 position) override;
+                               F32 angle) override;
 
     private :
 
@@ -71,6 +71,12 @@ class RobotArm : public RobotArmComponentBase {
         // ----------------------------------------------------------------------
         U8
         checksumCrc8(const U8* const data, const U32 dataSize);
+
+    //! Convert angle (0-180 degrees) to PWM pulse width (500-2500 microseconds)
+    U16 angleToPwm(const F32 angle);
+
+    //! Convert PWM pulse width (500-2500 microseconds) to angle (0-180 degrees)
+    F32 pwmToAngle(const U16 pwm);
 
     Drv::ByteStreamStatus pwmServoSetPosition(const U16 durationMs, const RobotArm_Servo servo, const U16 pwm);
 
