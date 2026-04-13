@@ -96,7 +96,7 @@ void RobotArm ::SetPosition_cmdHandler(FwOpcodeType opCode,
                                        U32 cmdSeq,
                                        Components::RobotArm_Servo servo,
                                        F32 angle) {
-    static constexpr U16 durationMs = 300;
+    static constexpr U16 durationMs = 500;
 
     // Convert angle to PWM value
     U16 pwm = this->angleToPwm(angle);
@@ -106,7 +106,8 @@ void RobotArm ::SetPosition_cmdHandler(FwOpcodeType opCode,
     Fw::CmdResponse response =
         (status == Drv::ByteStreamStatus::OP_OK) ? Fw::CmdResponse::OK : Fw::CmdResponse::EXECUTION_ERROR;
 
-    Os::Task::delay(Fw::TimeInterval(0, 300000));
+    // Important to wait 1 second between commands"
+    Os::Task::delay(Fw::TimeInterval(1, 0));
     this->readServoPosition(servo);
     this->cmdResponse_out(opCode, cmdSeq, response);
 }
